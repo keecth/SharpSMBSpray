@@ -1,0 +1,51 @@
+name: Build SharpSMBSpray
+
+on:
+  push:
+    branches: [ "master", "main" ]
+  pull_request:
+    branches: [ "master", "main" ]
+  workflow_dispatch:   # 允许手动触发
+
+jobs:
+  build:
+    runs-on: windows-latest   # SMB/Windows 工具用 Windows runner
+
+    steps:
+      # 1. 检出代码
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2. 设置 .NET 环境（兼容 .NET Framework 项目）
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Setup NuGet
+        uses: NuGet/setup-nuget@v2
+
+      # 3. 还原 NuGet 依赖
+      - name: Restore NuGet packages
+        run: nuget restore SharpSMBSpray.sln
+
+      # 4. 编译（Release 模式）
+      - name: Build with MSBuild
+        run: |
+          msbuild SharpSMBSpray.sln `
+            /p:Configuration=Release `
+            /p:Platform="Any CPU" `
+            /p:OutputPath=bin\Release\
+
+      # 5. 列出产物（调试用，可选）
+      - name: List build output
+        run: Get-ChildItem -Recurse -Filter "*.exe" | Select-Object FullName
+
+      # 6. 上传构建产物（保留 7 天）
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: SharpSMBSpray-Release
+          path: |
+            **/bin/Release/*.exe
+            **/bin/Release/*.dll
+            **/bin/Release/*.pdb
+          retention-days: 7
