@@ -21,21 +21,25 @@ jobs:
       - name: Setup NuGet
         uses: NuGet/setup-nuget@v2
 
-      # 列出仓库结构，方便调试
-      - name: Show repository structure
-        run: Get-ChildItem -Recurse -Include "*.sln","*.csproj" | Select-Object FullName
+      # windows-latest 缺少 .NET 4.0 Targeting Pack，用 choco 补装
+      - name: Install .NET Framework 4.0 Developer Pack
+        shell: powershell
+        run: choco install netfx-4.0.3-devpack -y --no-progress
 
-      # .sln 在子目录 SharpSMBSpray/ 下
       - name: Restore NuGet packages
+        shell: powershell
         run: nuget restore SharpSMBSpray\SharpSMBSpray.sln
 
       - name: Build with MSBuild
+        shell: powershell
         run: |
           msbuild SharpSMBSpray\SharpSMBSpray.sln `
             /p:Configuration=Release `
-            /p:Platform="Any CPU"
+            /p:Platform="Any CPU" `
+            /p:TargetFrameworkVersion=v4.0
 
       - name: List build output
+        shell: powershell
         run: Get-ChildItem -Recurse -Filter "*.exe" | Select-Object FullName
 
       - name: Upload artifact
