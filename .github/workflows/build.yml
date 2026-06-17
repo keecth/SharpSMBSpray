@@ -5,41 +5,39 @@ on:
     branches: [ "master", "main" ]
   pull_request:
     branches: [ "master", "main" ]
-  workflow_dispatch:   # 允许手动触发
+  workflow_dispatch:
 
 jobs:
   build:
-    runs-on: windows-latest   # SMB/Windows 工具用 Windows runner
+    runs-on: windows-latest
 
     steps:
-      # 1. 检出代码
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2. 设置 .NET 环境（兼容 .NET Framework 项目）
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v2
 
       - name: Setup NuGet
         uses: NuGet/setup-nuget@v2
 
-      # 3. 还原 NuGet 依赖
-      - name: Restore NuGet packages
-        run: nuget restore SharpSMBSpray.sln
+      # 列出仓库结构，方便调试
+      - name: Show repository structure
+        run: Get-ChildItem -Recurse -Include "*.sln","*.csproj" | Select-Object FullName
 
-      # 4. 编译（Release 模式）
+      # .sln 在子目录 SharpSMBSpray/ 下
+      - name: Restore NuGet packages
+        run: nuget restore SharpSMBSpray\SharpSMBSpray.sln
+
       - name: Build with MSBuild
         run: |
-          msbuild SharpSMBSpray.sln `
+          msbuild SharpSMBSpray\SharpSMBSpray.sln `
             /p:Configuration=Release `
-            /p:Platform="Any CPU" `
-            /p:OutputPath=bin\Release\
+            /p:Platform="Any CPU"
 
-      # 5. 列出产物（调试用，可选）
       - name: List build output
         run: Get-ChildItem -Recurse -Filter "*.exe" | Select-Object FullName
 
-      # 6. 上传构建产物（保留 7 天）
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
@@ -47,5 +45,4 @@ jobs:
           path: |
             **/bin/Release/*.exe
             **/bin/Release/*.dll
-            **/bin/Release/*.pdb
           retention-days: 7
