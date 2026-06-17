@@ -9,7 +9,9 @@ on:
 
 jobs:
   build:
-    runs-on: windows-latest
+    # windows-2019 内置 .NET Framework 4.0/4.5/4.6/4.7/4.8 完整 targeting pack
+    # 无需额外安装，直接支持 v4.0 项目
+    runs-on: windows-2019
 
     steps:
       - name: Checkout repository
@@ -20,11 +22,6 @@ jobs:
 
       - name: Setup NuGet
         uses: NuGet/setup-nuget@v2
-
-      # windows-latest 缺少 .NET 4.0 Targeting Pack，用 choco 补装
-      - name: Install .NET Framework 4.0 Developer Pack
-        shell: powershell
-        run: choco install netfx-4.0.3-devpack -y --no-progress
 
       - name: Restore NuGet packages
         shell: powershell
